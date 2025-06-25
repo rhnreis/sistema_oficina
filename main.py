@@ -54,7 +54,7 @@ def create_app():
             db.session.commit()
     
     return app
-
+ #rodrigo@lantercar.com / 1234
 app = create_app()
 
 if __name__ == '__main__':
