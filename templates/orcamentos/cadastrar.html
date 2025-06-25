@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Cadastrar Orçamento{% endblock %}
+
+{% block page_title %}Novo Orçamento{% endblock %}
+
+{% block content %}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('orcamentos.cadastrar') }}">
+                <div class="mb-3">
+                    <label for="cliente_id" class="form-label">Cliente</label>
+                    <select class="form-select" id="cliente_id" name="cliente_id" required>
+                        <option value="">Selecione um cliente</option>
+                        {% if cliente_selecionado %}
+                            <option value="{{ cliente_selecionado.id }}" selected>{{ cliente_selecionado.nome }} ({{ cliente_selecionado.cpf_cnpj }})</option>
+                        {% endif %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="descricao_servico" class="form-label">Descrição do Serviço</label>
+                    <textarea class="form-control" id="descricao_servico" name="descricao_servico" rows="3" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="valor_mao_obra" class="form-label">Valor da Mão de Obra</label>
+                    <input type="number" step="0.01" class="form-control" id="valor_mao_obra" name="valor_mao_obra" value="0.00">
+                </div>
+                <div class="mb-3">
+                    <label for="validade_dias" class="form-label">Validade (dias)</label>
+                    <input type="number" class="form-control" id="validade_dias" name="validade_dias" value="30">
+                </div>
+                <div class="mb-3">
+                    <label for="observacoes" class="form-label">Observações</label>
+                    <textarea class="form-control" id="observacoes" name="observacoes" rows="3"></textarea>
+                </div>
+
+                <hr>
+                <h5>Itens do Orçamento</h5>
+                <div id="itens-orcamento">
+                    <div class="row item-row mb-3">
+                        <div class="col-md-5">
+                            <label class="form-label">Material</label>
+                            <select class="form-select material-select" name="material_id[]">
+                                <option value="">Selecione um material</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Quantidade</label>
+                            <input type="number" step="0.01" class="form-control quantidade-input" name="quantidade[]" value="1">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Preço Unitário</label>
+                            <input type="number" step="0.01" class="form-control preco-input" name="preco_unitario[]" value="0.00">
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="button" class="btn btn-danger remove-item"><i class="bi bi-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary mb-4" id="add-item"><i class="bi bi-plus-circle"></i> Adicionar Item</button>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-success">Cadastrar Orçamento</button>
+                    <a href="{{ url_for('orcamentos.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Autocomplete para clientes
+        const clienteSelect = document.getElementById('cliente_id');
+        if (!clienteSelect.selectedOptions[0].value) { // Se não houver cliente pré-selecionado
+            fetch('/clientes/api/buscar') // Assumindo que você tem uma API para buscar clientes
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(cliente => {
+                        const option = document.createElement('option');
+                        option.value = cliente.id;
+                        option.textContent = `${cliente.nome} (${cliente.cpf_cnpj})`;
+                        clienteSelect.appendChild(option);
+                    });
+                });
+        }
+
+        // Adicionar/Remover itens do orçamento
+        document.getElementById('add-item').addEventListener('click', function() {
+            const itemRow = document.querySelector('.item-row').cloneNode(true);
+            itemRow.querySelectorAll('input').forEach(input => input.value = '');
+            itemRow.querySelector('.material-select').innerHTML = '<option value="">Selecione um material</option>';
+            document.getElementById('itens-orcamento').appendChild(itemRow);
+            loadMaterials(itemRow.querySelector('.material-select'));
+        });
+
+        document.getElementById('itens-orcamento').addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-item') || e.target.closest('.remove-item')) {
+                if (document.querySelectorAll('.item-row').length > 1) {
+                    e.target.closest('.item-row').remove();
+                } else {
+                    alert('Pelo menos um item é obrigatório.');
+                }
+            }
+        });
+
+        // Carregar materiais para os selects
+        function loadMaterials(selectElement) {
+            fetch('/materiais/api/buscar?q=') // Assumindo que você tem uma API para buscar materiais
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(material => {
+                        const option = document.createElement('option');
+                        option.value = material.id;
+                        option.textContent = `${material.nome} (${material.codigo})`;
+                        selectElement.appendChild(option);
+                    });
+                });
+        }
+
+        // Carregar materiais para o primeiro select ao carregar a página
+        loadMaterials(document.querySelector('.material-select'));
+
+        // Atualizar preço unitário ao selecionar material
+        document.getElementById('itens-orcamento').addEventListener('change', function(e) {
+            if (e.target.classList.contains('material-select')) {
+                const materialId = e.target.value;
+                const precoInput = e.target.closest('.item-row').querySelector('.preco-input');
+                if (materialId) {
+                    fetch(`/materiais/api/buscar?id=${materialId}`) // Assumindo que você pode buscar material por ID
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data && data.length > 0) {
+                                precoInput.value = data[0].preco_unitario;
+                            }
+                        });
+                } else {
+                    precoInput.value = '0.00';
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
+

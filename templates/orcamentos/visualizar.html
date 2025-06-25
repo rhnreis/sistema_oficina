@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Visualizar Orçamento{% endblock %}
+
+{% block page_title %}Detalhes do Orçamento{% endblock %}
+
+{% block content %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Orçamento #{{ orcamento.numero_orcamento }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Cliente:</strong> {{ orcamento.cliente.nome }}
+                </div>
+                <div class="col-md-6">
+                    <strong>CPF/CNPJ:</strong> {{ orcamento.cliente.cpf_cnpj }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Data do Orçamento:</strong> {{ orcamento.data_orcamento.strftime('%d/%m/%Y') }}
+                </div>
+                <div class="col-md-6">
+                    <strong>Validade:</strong> {{ orcamento.validade.strftime('%d/%m/%Y') }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <strong>Descrição do Serviço:</strong> {{ orcamento.descricao_servico }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Valor Mão de Obra:</strong> R$ {{ '%.2f'|format(orcamento.valor_mao_obra) }}
+                </div>
+                <div class="col-md-6">
+                    <strong>Status:</strong> 
+                    {% if orcamento.status == 'pendente' %}
+                        <span class="badge bg-warning">Pendente</span>
+                    {% elif orcamento.status == 'aceito' %}
+                        <span class="badge bg-success">Aceito</span>
+                    {% else %}
+                        <span class="badge bg-danger">Rejeitado</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <strong>Observações:</strong> {{ orcamento.observacoes if orcamento.observacoes else 'Nenhuma' }}
+                </div>
+            </div>
+
+            <h5 class="mt-4">Itens do Orçamento</h5>
+            {% if orcamento.itens %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Material</th>
+                                <th>Código</th>
+                                <th>Quantidade</th>
+                                <th>Preço Unitário</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in orcamento.itens %}
+                                <tr>
+                                    <td>{{ item.material.nome }}</td>
+                                    <td>{{ item.material.codigo }}</td>
+                                    <td>{{ '%.2f'|format(item.quantidade) }} {{ item.material.unidade_medida }}</td>
+                                    <td>R$ {{ '%.2f'|format(item.preco_unitario) }}</td>
+                                    <td>R$ {{ '%.2f'|format(item.subtotal) }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="4" class="text-end">Total dos Materiais:</th>
+                                <th>R$ {{ '%.2f'|format(orcamento.valor_materiais) }}</th>
+                            </tr>
+                            <tr>
+                                <th colspan="4" class="text-end">Valor Total do Orçamento:</th>
+                                <th>R$ {{ '%.2f'|format(orcamento.valor_total) }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            {% else %}
+                <p>Nenhum item adicionado a este orçamento.</p>
+            {% endif %}
+
+            <div class="mt-4 d-flex justify-content-end">
+                <a href="{{ url_for('orcamentos.listar') }}" class="btn btn-secondary me-2">Voltar</a>
+                {% if orcamento.status == 'pendente' %}
+                    <a href="{{ url_for('orcamentos.editar', id=orcamento.id) }}" class="btn btn-warning me-2">Editar</a>
+                    <a href="{{ url_for('orcamentos.aceitar', id=orcamento.id) }}" class="btn btn-success me-2" onclick="return confirm('Tem certeza que deseja aceitar este orçamento? Uma Ordem de Serviço será criada automaticamente.');">Aceitar</a>
+                    <a href="{{ url_for('orcamentos.rejeitar', id=orcamento.id) }}" class="btn btn-danger me-2" onclick="return confirm('Tem certeza que deseja rejeitar este orçamento?');">Rejeitar</a>
+                {% endif %}
+                <a href="{{ url_for('orcamentos.gerar_pdf', id=orcamento.id) }}" class="btn btn-info" target="_blank">Gerar PDF</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
