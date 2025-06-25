@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Notas Fiscais{% endblock %}
+
+{% block page_title %}Notas Fiscais{% endblock %}
+
+{% block content %}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form class="row g-3 mb-4" method="GET" action="{{ url_for('notas_fiscais.listar') }}">
+                <div class="col-md-6">
+                    <input type="text" name="search" class="form-control" placeholder="Buscar por número da NF, OS ou cliente..." value="{{ search if search else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <select name="status" class="form-select">
+                        <option value="">Todos os Status</option>
+                        <option value="emitida" {% if status_filter == 'emitida' %}selected{% endif %}>Emitida</option>
+                        <option value="cancelada" {% if status_filter == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+            </form>
+
+            {% if notas_fiscais.items %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>Número NF</th>
+                                <th>Ordem de Serviço</th>
+                                <th>Cliente</th>
+                                <th>Data Emissão</th>
+                                <th>Valor Total</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for nf in notas_fiscais.items %}
+                                <tr>
+                                    <td>{{ nf.numero_nf }}</td>
+                                    <td>{{ nf.ordem_servico.numero_ordem }}</td>
+                                    <td>{{ nf.ordem_servico.orcamento.cliente.nome }}</td>
+                                    <td>{{ nf.data_emissao.strftime('%d/%m/%Y') }}</td>
+                                    <td>R$ {{ "%.2f"|format(nf.valor_total) }}</td>
+                                    <td>
+                                        {% if nf.status == 'emitida' %}
+                                            <span class="badge bg-success">Emitida</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Cancelada</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('notas_fiscais.visualizar', id=nf.id) }}" class="btn btn-sm btn-info" title="Visualizar">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('notas_fiscais.gerar_pdf', id=nf.id) }}" class="btn btn-sm btn-secondary" title="Gerar PDF" target="_blank">
+                                                <i class="bi bi-file-pdf"></i>
+                                            </a>
+                                            {% if nf.status == 'emitida' %}
+                                                <a href="{{ url_for('notas_fiscais.cancelar', id=nf.id) }}" class="btn btn-sm btn-danger" title="Cancelar" onclick="return confirm('Tem certeza que deseja cancelar esta Nota Fiscal?');">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if notas_fiscais.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('notas_fiscais.listar', page=notas_fiscais.prev_num, search=search, status=status_filter) }}">Anterior</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#">Anterior</a>
+                            </li>
+                        {% endif %}
+                        {% for page in notas_fiscais.iter_pages() %}
+                            {% if page %}
+                                {% if page != notas_fiscais.page %}
+                                    <li class="page-item"><a class="page-link" href="{{ url_for('notas_fiscais.listar', page=page, search=search, status=status_filter) }}">{{ page }}</a></li>
+                                {% else %}
+                                    <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if notas_fiscais.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('notas_fiscais.listar', page=notas_fiscais.next_num, search=search, status=status_filter) }}">Próximo</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#">Próximo</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    Nenhuma nota fiscal encontrada.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+

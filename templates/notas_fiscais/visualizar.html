@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Visualizar Nota Fiscal{% endblock %}
+
+{% block page_title %}Detalhes da Nota Fiscal{% endblock %}
+
+{% block content %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Nota Fiscal #{{ nota_fiscal.numero_nf }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Número da NF:</strong> {{ nota_fiscal.numero_nf }}
+                </div>
+                <div class="col-md-6">
+                    <strong>Data de Emissão:</strong> {{ nota_fiscal.data_emissao.strftime('%d/%m/%Y %H:%M') }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Ordem de Serviço:</strong> 
+                    {% if nota_fiscal.ordem_servico %}
+                        <a href="{{ url_for("ordens.visualizar", id=nota_fiscal.ordem_servico.id) }}">
+                            {{ nota_fiscal.ordem_servico.numero_ordem }}
+                        </a>
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <strong>Cliente:</strong> 
+                    {% if nota_fiscal.ordem_servico and nota_fiscal.ordem_servico.orcamento and nota_fiscal.ordem_servico.orcamento.cliente %}
+                        {{ nota_fiscal.ordem_servico.orcamento.cliente.nome }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Valor Total:</strong> R$ {{ "%.2f"|format(nota_fiscal.valor_total) }}
+                </div>
+                <div class="col-md-6">
+                    <strong>Status:</strong> 
+                    {% if nota_fiscal.status == 'emitida' %}
+                        <span class="badge bg-success">Emitida</span>
+                    {% else %}
+                        <span class="badge bg-danger">Cancelada</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <h5 class="mt-4">Itens da Nota Fiscal</h5>
+            {% if nota_fiscal.ordem_servico and nota_fiscal.ordem_servico.orcamento and nota_fiscal.ordem_servico.orcamento.itens %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Material</th>
+                                <th>Código</th>
+                                <th>Quantidade</th>
+                                <th>Preço Unitário</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in nota_fiscal.ordem_servico.orcamento.itens %}
+                                <tr>
+                                    <td>{{ item.material.nome }}</td>
+                                    <td>{{ item.material.codigo }}</td>
+                                    <td>{{ "%.2f"|format(item.quantidade) }} {{ item.material.unidade_medida }}</td>
+                                    <td>R$ {{ "%.2f"|format(item.preco_unitario) }}</td>
+                                    <td>R$ {{ "%.2f"|format(item.subtotal) }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="4" class="text-end">Total dos Materiais:</th>
+                                <th>R$ {{ "%.2f"|format(nota_fiscal.ordem_servico.orcamento.valor_materiais) }}</th>
+                            </tr>
+                            <tr>
+                                <th colspan="4" class="text-end">Valor Mão de Obra:</th>
+                                <th>R$ {{ "%.2f"|format(nota_fiscal.ordem_servico.orcamento.valor_mao_obra) }}</th>
+                            </tr>
+                            <tr>
+                                <th colspan="4" class="text-end">Valor Total da NF:</th>
+                                <th>R$ {{ "%.2f"|format(nota_fiscal.valor_total) }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            {% else %}
+                <p>Nenhum item encontrado para esta nota fiscal.</p>
+            {% endif %}
+
+            <div class="mt-4 d-flex justify-content-end">
+                <a href="{{ url_for('notas_fiscais.listar') }}" class="btn btn-secondary me-2">Voltar</a>
+                <a href="{{ url_for('notas_fiscais.gerar_pdf', id=nota_fiscal.id) }}" class="btn btn-info" target="_blank">Gerar PDF</a>
+                {% if nota_fiscal.status == 'emitida' %}
+                    <a href="{{ url_for('notas_fiscais.cancelar', id=nota_fiscal.id) }}" class="btn btn-danger ms-2" onclick="return confirm('Tem certeza que deseja cancelar esta Nota Fiscal?');">Cancelar NF</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
