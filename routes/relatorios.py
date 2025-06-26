@@ -8,7 +8,8 @@ from io import BytesIO
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill
 
-relatorios_bp = Blueprint('relatorios', __name__)
+#relatorios_bp = Blueprint('relatorios', __name__)
+relatorios_bp = Blueprint('relatorios', __name__, url_prefix='/relatorios')
 
 @relatorios_bp.route('/')
 @login_required

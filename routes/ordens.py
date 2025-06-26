@@ -3,7 +3,8 @@ from flask_login import login_required, current_user
 from models import db, OrdemServico, Contrato, NotaFiscal, Orcamento
 from datetime import datetime
 
-ordens_bp = Blueprint('ordens', __name__)
+#ordens_bp = Blueprint('ordens', __name__)
+ordens_bp = Blueprint('ordens', __name__, url_prefix='/ordens')
 
 def gerar_numero_ordem():
     """Gerar número único para ordem de serviço"""

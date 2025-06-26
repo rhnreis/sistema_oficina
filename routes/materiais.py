@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required
 from models import db, Material
 
-materiais_bp = Blueprint('materiais', __name__)
+#materiais_bp = Blueprint('materiais', __name__)
+materiais_bp = Blueprint('materiais', __name__, url_prefix='/materiais')
 
 @materiais_bp.route('/')
 @login_required

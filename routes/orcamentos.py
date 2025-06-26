@@ -3,7 +3,8 @@ from flask_login import login_required, current_user
 from models import db, Orcamento, ItemOrcamento, Cliente, Material
 from datetime import datetime, timedelta
 
-orcamentos_bp = Blueprint('orcamentos', __name__)
+#orcamentos_bp = Blueprint('orcamentos', __name__)
+orcamentos_bp = Blueprint('orcamentos', __name__, url_prefix='/orcamentos')
 
 def gerar_numero_orcamento():
     """Gerar número único para orçamento"""
