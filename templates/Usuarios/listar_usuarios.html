@@ -21,7 +21,6 @@
                         <th>Nome</th>
                         <th>Email</th>
                         <th>Status</th>
-                        <th>Data Criação</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -38,7 +37,7 @@
                                 <span class="badge bg-danger">Inativo</span>
                             {% endif %}
                         </td>
-                        <td>{{ usuario.data_criacao.strftime('%d/%m/%Y %H:%M') }}</td>
+                    
                         <td>
                             <a href="{{ url_for('auth.toggle_usuario_status', id=usuario.id) }}" 
                                class="btn btn-sm btn-{{ 'warning' if usuario.ativo else 'success' }}"

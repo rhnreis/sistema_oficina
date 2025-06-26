@@ -61,4 +61,18 @@ def cadastrar_usuario():
 @login_required
 def listar_usuarios():
     usuarios = Usuario.query.all()
-    return render_template('auth/listar_usuarios.html', usuarios=usuarios)
+    #return render_template('auth/listar_usuarios.html', usuarios=usuarios)
+    return render_template('usuarios/listar_usuarios.html', usuarios=usuarios)
+
+@auth_bp.route('/toggle-usuario-status/<int:id>')
+@login_required
+def toggle_usuario_status(id):
+    usuario = Usuario.query.get_or_404(id)
+
+    # Alterna o status (ativo/inativo)
+    usuario.ativo = not usuario.ativo
+
+    db.session.commit()
+
+    flash(f"Usuário {'ativado' if usuario.ativo else 'desativado'} com sucesso!", 'success')
+    return redirect(url_for('auth.listar_usuarios'))
