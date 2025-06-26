@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Visualizar Ordem de Serviço{% endblock %}
+
+{% block page_title %}Detalhes da Ordem de Serviço{% endblock %}
+
+{% block content %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Ordem de Serviço #{{ ordem.numero_ordem }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Orçamento Associado:</strong> 
+                    {% if ordem.orcamento %}
+                        <a href="{{ url_for('orcamentos.visualizar', id=ordem.orcamento.id) }}">
+                            {{ ordem.orcamento.numero_orcamento }}
+                        </a>
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <strong>Cliente:</strong> 
+                    {% if ordem.orcamento and ordem.orcamento.cliente %}
+                        {{ ordem.orcamento.cliente.nome }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Data de Criação:</strong> {{ ordem.data_criacao.strftime('%d/%m/%Y %H:%M') }}
+                </div>
+                <div class="col-md-6">
+                    <strong>Data de Início:</strong> {{ ordem.data_inicio.strftime('%d/%m/%Y %H:%M') if ordem.data_inicio else 'N/A' }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Data de Conclusão:</strong> {{ ordem.data_conclusao.strftime('%d/%m/%Y %H:%M') if ordem.data_conclusao else 'N/A' }}
+                </div>
+                <div class="col-md-6">
+                    <strong>Status:</strong> 
+                    {% if ordem.status == 'em_andamento' %}
+                        <span class="badge bg-primary">Em Andamento</span>
+                    {% elif ordem.status == 'concluido' %}
+                        <span class="badge bg-success">Concluído</span>
+                    {% else %}
+                        <span class="badge bg-danger">Cancelado</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <strong>Observações:</strong> {{ ordem.observacoes if ordem.observacoes else 'Nenhuma' }}
+                </div>
+            </div>
+
+            {% if ordem.contrato %}
+                <h5 class="mt-4">Detalhes do Contrato</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Número do Contrato:</strong> {{ ordem.contrato.numero_contrato }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Status do Contrato:</strong> {{ ordem.contrato.status.replace('_', ' ').title() }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <strong>Termos e Condições:</strong> <pre>{{ ordem.contrato.termos_condicoes }}</pre>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if ordem.nota_fiscal %}
+                <h5 class="mt-4">Detalhes da Nota Fiscal</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Número da NF:</strong> 
+                        <a href="{{ url_for('notas_fiscais.visualizar', id=ordem.nota_fiscal.id) }}">
+                            {{ ordem.nota_fiscal.numero_nf }}
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Valor Total NF:</strong> R$ {{ '%.2f'|format(ordem.nota_fiscal.valor_total) }}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="mt-4 d-flex justify-content-end">
+                <a href="{{ url_for('ordens.listar') }}" class="btn btn-secondary me-2">Voltar</a>
+                {% if ordem.status == 'em_andamento' %}
+                    <a href="{{ url_for('ordens.concluir', id=ordem.id) }}" class="btn btn-success me-2">Concluir OS</a>
+                    <a href="{{ url_for('ordens.cancelar', id=ordem.id) }}" class="btn btn-danger me-2">Cancelar OS</a>
+                {% endif %}
+                <a href="{{ url_for('ordens.gerar_pdf_ordem', id=ordem.id) }}" class="btn btn-info" target="_blank">Gerar PDF da OS</a>
+                {% if ordem.contrato %}
+                    <a href="{{ url_for('ordens.gerar_pdf_contrato', id=ordem.id) }}" class="btn btn-primary ms-2" target="_blank">Gerar PDF do Contrato</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Ordens de Serviço{% endblock %}
+
+{% block page_title %}Ordens de Serviço{% endblock %}
+
+{% block content %}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form class="row g-3 mb-4" method="GET" action="{{ url_for('ordens.listar') }}">
+                <div class="col-md-6">
+                    <input type="text" name="search" class="form-control" placeholder="Buscar por número da OS, orçamento ou cliente..." value="{{ search if search else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <select name="status" class="form-select">
+                        <option value="">Todos os Status</option>
+                        <option value="em_andamento" {% if status_filter == 'em_andamento' %}selected{% endif %}>Em Andamento</option>
+                        <option value="concluido" {% if status_filter == 'concluido' %}selected{% endif %}>Concluído</option>
+                        <option value="cancelado" {% if status_filter == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+            </form>
+
+            {% if ordens.items %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>Número OS</th>
+                                <th>Orçamento</th>
+                                <th>Cliente</th>
+                                <th>Data Início</th>
+                                <th>Data Conclusão</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ordem in ordens.items %}
+                                <tr>
+                                    <td>{{ ordem.numero_ordem }}</td>
+                                    <td>{{ ordem.orcamento.numero_orcamento }}</td>
+                                    <td>{{ ordem.orcamento.cliente.nome }}</td>
+                                    <td>{{ ordem.data_inicio.strftime('%d/%m/%Y') if ordem.data_inicio else 'N/A' }}</td>
+                                    <td>{{ ordem.data_conclusao.strftime('%d/%m/%Y') if ordem.data_conclusao else 'N/A' }}</td>
+                                    <td>
+                                        {% if ordem.status == 'em_andamento' %}
+                                            <span class="badge bg-primary">Em Andamento</span>
+                                        {% elif ordem.status == 'concluido' %}
+                                            <span class="badge bg-success">Concluído</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Cancelado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('ordens.visualizar', id=ordem.id) }}" class="btn btn-sm btn-info" title="Visualizar">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if ordem.status == 'em_andamento' %}
+                                                <a href="{{ url_for('ordens.concluir', id=ordem.id) }}" class="btn btn-sm btn-success" title="Concluir">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </a>
+                                                <a href="{{ url_for('ordens.cancelar', id=ordem.id) }}" class="btn btn-sm btn-danger" title="Cancelar">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{{ url_for('ordens.gerar_pdf_ordem', id=ordem.id) }}" class="btn btn-sm btn-secondary" title="Gerar PDF da OS" target="_blank">
+                                                <i class="bi bi-file-pdf"></i>
+                                            </a>
+                                            {% if ordem.contrato %}
+                                                <a href="{{ url_for('ordens.gerar_pdf_contrato', id=ordem.id) }}" class="btn btn-sm btn-secondary" title="Gerar PDF do Contrato" target="_blank">
+                                                    <i class="bi bi-file-earmark-text"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if ordens.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('ordens.listar', page=ordens.prev_num, search=search, status=status_filter) }}">Anterior</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#">Anterior</a>
+                            </li>
+                        {% endif %}
+                        {% for page in ordens.iter_pages() %}
+                            {% if page %}
+                                {% if page != ordens.page %}
+                                    <li class="page-item"><a class="page-link" href="{{ url_for('ordens.listar', page=page, search=search, status=status_filter) }}">{{ page }}</a></li>
+                                {% else %}
+                                    <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if ordens.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('ordens.listar', page=ordens.next_num, search=search, status=status_filter) }}">Próximo</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#">Próximo</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    Nenhuma ordem de serviço encontrada.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
