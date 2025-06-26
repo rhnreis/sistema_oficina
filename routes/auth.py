@@ -55,7 +55,7 @@ def cadastrar_usuario():
         flash('Usuário cadastrado com sucesso!', 'success')
         return redirect(url_for('auth.listar_usuarios'))
     
-    return render_template('auth/cadastrar_usuario.html')
+    return render_template('usuarios/cadastrar_usuario.html')
 
 @auth_bp.route('/listar-usuarios')
 @login_required
