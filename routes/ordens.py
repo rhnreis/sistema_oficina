@@ -279,3 +279,24 @@ def gerar_nota_fiscal_automatica(ordem_id):
         db.session.rollback()
         return False
 
+@ordens_bp.route('/cadastrar', methods=['GET', 'POST'])
+@login_required
+def cadastrar():
+    if request.method == 'POST':
+        # lógica de criação manual
+        # exemplo (ajuste conforme seus campos):
+        orcamento_id = request.form.get('orcamento_id')
+        numero_ordem = gerar_numero_ordem()
+        observacoes = request.form.get('observacoes', '')
+        
+        ordem = OrdemServico(
+            orcamento_id=orcamento_id,
+            numero_ordem=numero_ordem,
+            observacoes=observacoes
+        )
+        db.session.add(ordem)
+        db.session.commit()
+        flash('Ordem criada com sucesso!', 'success')
+        return redirect(url_for('ordens.visualizar', id=ordem.id))
+    
+    return render_template('ordens/cadastrar.html')

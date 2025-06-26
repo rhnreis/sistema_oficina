@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required
 from models import db, Cliente
 
-clientes_bp = Blueprint('clientes', __name__)
+clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')
 
 @clientes_bp.route('/')
 @login_required

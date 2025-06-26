@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Cadastrar Ordem de Serviço</h2>
+    
+    <form method="POST">
+        <div class="mb-3">
+            <label for="orcamento_id" class="form-label">ID do Orçamento</label>
+            <input type="number" class="form-control" name="orcamento_id" id="orcamento_id" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="observacoes" class="form-label">Observações</label>
+            <textarea class="form-control" name="observacoes" id="observacoes" rows="4"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Criar Ordem</button>
+        <a href="{{ url_for('ordens.listar') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
