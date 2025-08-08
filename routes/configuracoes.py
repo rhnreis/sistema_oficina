@@ -6,6 +6,12 @@ configuracoes_bp = Blueprint('configuracoes', __name__, url_prefix='/configuraco
 
 @configuracoes_bp.route('/', methods=['GET', 'POST'])
 @login_required
+def index():
+    """Redireciona para o painel por padrão."""
+    return redirect(url_for('configuracoes.painel'))
+
+@configuracoes_bp.route('/painel', methods=['GET', 'POST'])
+@login_required
 def painel():
     config = Configuracao.query.order_by(Configuracao.id.desc()).first()
     if request.method == 'POST':
