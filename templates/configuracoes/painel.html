@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Painel de Configurações</h2>
+    <form method="post" class="mt-4" autocomplete="off">
+        <div class="mb-3">
+            <label for="fator_divisao" class="form-label">Fator de Divisão</label>
+            <input type="number" step="0.01" min="0.01" class="form-control" id="fator_divisao" name="fator_divisao" value="{{ config.fator_divisao if config else 1.0 }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="porcentagem_frete" class="form-label">Porcentagem de Frete (%)</label>
+            <input type="number" step="0.01" min="0" class="form-control" id="porcentagem_frete" name="porcentagem_frete" value="{{ config.porcentagem_frete if config else 0.0 }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+    </form>
+</div>
+{% endblock %}

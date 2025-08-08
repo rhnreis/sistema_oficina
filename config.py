@@ -8,7 +8,7 @@ class Config:
     
     # Database Configuration - SQLite para desenvolvimento
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'lantercar.db')
+        'postgresql://postgres:admin123@localhost:5432/lantercar'
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     

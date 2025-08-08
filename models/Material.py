@@ -10,6 +10,8 @@ class Material(db.Model):
     estoque = db.Column(db.Integer, default=0)
     estoque_minimo = db.Column(db.Integer, default=5)
     unidade_medida = db.Column(db.String(10), default='UN')
+    valor_frete = db.Column(db.Float, nullable=True)  # Valor do frete calculado na criação
+    codigo_gerado = db.Column(db.Boolean, default=False)  # Indica se o código foi gerado automaticamente
 
     itens_orcamento = db.relationship('ItemOrcamento', backref='material', lazy=True)
 

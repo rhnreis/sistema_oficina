@@ -153,15 +153,14 @@ def excluir(id):
 def api_buscar():
     """API para buscar clientes (usado em orçamentos)"""
     search = request.args.get('q', '')
-    
-    if len(search) < 2:
-        return jsonify([])
-    
-    clientes = Cliente.query.filter(
-        Cliente.nome.contains(search) | 
-        Cliente.cpf_cnpj.contains(search)
-    ).limit(10).all()
-    
+    if search and len(search) >= 2:
+        clientes = Cliente.query.filter(
+            Cliente.nome.contains(search) | 
+            Cliente.cpf_cnpj.contains(search)
+        ).limit(20).all()
+    else:
+        clientes = Cliente.query.order_by(Cliente.nome).limit(20).all()
+
     result = []
     for cliente in clientes:
         result.append({
@@ -171,7 +170,7 @@ def api_buscar():
             'telefone': cliente.telefone,
             'email': cliente.email
         })
-    
+
     return jsonify(result)
 
 def format_cpf_cnpj(cpf_cnpj):

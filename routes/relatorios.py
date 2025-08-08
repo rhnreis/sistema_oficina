@@ -26,7 +26,7 @@ def servicos():
     status = request.args.get('status')
     
     # Query base
-    query = OrdemServico.query.join(Orcamento).join(Cliente)
+    query = OrdemServico.query.join(Orcamento, OrdemServico.orcamento_id == Orcamento.id).join(Cliente, Orcamento.cliente_id == Cliente.id)
     
     # Aplicar filtros
     if data_inicio:
@@ -91,7 +91,7 @@ def servicos_excel():
     status = request.args.get('status')
     
     # Query base
-    query = OrdemServico.query.join(Orcamento).join(Cliente)
+    query = OrdemServico.query.join(Orcamento, OrdemServico.orcamento_id == Orcamento.id).join(Cliente, Orcamento.cliente_id == Cliente.id)
     
     # Aplicar filtros
     if data_inicio:
@@ -186,7 +186,7 @@ def servicos_pdf():
     status = request.args.get('status')
     
     # Query base
-    query = OrdemServico.query.join(Orcamento).join(Cliente)
+    query = OrdemServico.query.join(Orcamento, OrdemServico.orcamento_id == Orcamento.id).join(Cliente, Orcamento.cliente_id == Cliente.id)
     
     # Aplicar filtros
     if data_inicio:

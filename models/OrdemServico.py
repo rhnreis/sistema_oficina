@@ -3,7 +3,8 @@ from datetime import datetime
 
 class OrdemServico(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    orcamento_id = db.Column(db.Integer, db.ForeignKey("orcamento.id"), unique=True, nullable=False)
+    orcamento_id = db.Column(db.Integer, db.ForeignKey("orcamento.id"), nullable=False)
+    orcamento = db.relationship("Orcamento", back_populates="ordens_servico")
     numero_ordem = db.Column(db.String(50), unique=True, nullable=False)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     data_inicio = db.Column(db.DateTime)

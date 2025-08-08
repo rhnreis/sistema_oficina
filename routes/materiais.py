@@ -36,23 +36,42 @@ def cadastrar():
         preco_unitario = request.form.get('preco_unitario')
         quantidade_estoque = request.form.get('quantidade_estoque', 0)
         unidade_medida = request.form.get('unidade_medida', 'UN')
-        
-        if not all([nome, codigo, preco_unitario]):
+
+        # Buscar configuração atual
+        from models import Configuracao
+        config = Configuracao.query.order_by(Configuracao.id.desc()).first()
+        fator_divisao = config.fator_divisao if config else 1.0
+        porcentagem_frete = config.porcentagem_frete if config else 0.0
+
+        # Geração automática de código se não informado
+        if not codigo or codigo.strip() == '':
+            ultimo = Material.query.order_by(Material.id.desc()).first()
+            proximo_id = (ultimo.id + 1) if ultimo else 1
+            codigo = f"MAT{proximo_id:05d}"
+            codigo_gerado = True
+        else:
+            codigo_gerado = False
+
+        if not all([nome, preco_unitario]):
             flash('Por favor, preencha todos os campos obrigatórios.', 'error')
             return render_template('materiais/cadastrar.html')
-        
+
         if Material.query.filter_by(codigo=codigo).first():
             flash('Este código já está cadastrado.', 'error')
             return render_template('materiais/cadastrar.html')
-        
+
         try:
+            preco_unitario = float(preco_unitario)
+            valor_frete = preco_unitario * (porcentagem_frete / 100.0)
             material = Material(
                 nome=nome,
                 descricao=descricao,
                 codigo=codigo,
-                preco_unitario=float(preco_unitario),
+                preco_unitario=preco_unitario,
                 quantidade_estoque=int(quantidade_estoque),
-                unidade_medida=unidade_medida
+                unidade_medida=unidade_medida,
+                valor_frete=valor_frete,
+                codigo_gerado=codigo_gerado
             )
             db.session.add(material)
             db.session.commit()

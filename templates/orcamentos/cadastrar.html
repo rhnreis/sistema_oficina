@@ -9,21 +9,22 @@
         <div class="card-body">
             <form method="POST" action="{{ url_for('orcamentos.cadastrar') }}">
                 <div class="mb-3">
-                    <label for="cliente_id" class="form-label">Cliente</label>
-                    <select class="form-select" id="cliente_id" name="cliente_id" required>
-                        <option value="">Selecione um cliente</option>
-                        {% if cliente_selecionado %}
-                            <option value="{{ cliente_selecionado.id }}" selected>{{ cliente_selecionado.nome }} ({{ cliente_selecionado.cpf_cnpj }})</option>
-                        {% endif %}
-                    </select>
+                    <label for="cliente_nome" class="form-label">Cliente</label>
+                    <input type="text" class="form-control" id="cliente_nome" placeholder="Digite o nome do cliente" autocomplete="off" required>
+                    <input type="hidden" id="cliente_id" name="cliente_id" value="{% if cliente_selecionado %}{{ cliente_selecionado.id }}{% endif %}">
+                    <div id="cliente_sugestoes" class="list-group position-absolute" style="z-index: 1000;"></div>
                 </div>
                 <div class="mb-3">
                     <label for="descricao_servico" class="form-label">Descrição do Serviço</label>
                     <textarea class="form-control" id="descricao_servico" name="descricao_servico" rows="3" required></textarea>
                 </div>
                 <div class="mb-3">
-                    <label for="valor_mao_obra" class="form-label">Valor da Mão de Obra</label>
-                    <input type="number" step="0.01" class="form-control" id="valor_mao_obra" name="valor_mao_obra" value="0.00">
+                    <label for="valor_servico" class="form-label">Valor do Serviço</label>
+                    <input type="number" step="0.01" class="form-control" id="valor_servico" name="valor_servico" value="0.00">
+                </div>
+                <div class="mb-3">
+                    <label for="valor_frete" class="form-label">Valor do Frete</label>
+                    <input type="number" step="0.01" class="form-control" id="valor_frete" name="valor_frete" value="0.00">
                 </div>
                 <div class="mb-3">
                     <label for="validade_dias" class="form-label">Validade (dias)</label>
@@ -34,30 +35,41 @@
                     <textarea class="form-control" id="observacoes" name="observacoes" rows="3"></textarea>
                 </div>
 
+
                 <hr>
-                <h5>Itens do Orçamento</h5>
-                <div id="itens-orcamento">
-                    <div class="row item-row mb-3">
-                        <div class="col-md-5">
-                            <label class="form-label">Material</label>
-                            <select class="form-select material-select" name="material_id[]">
-                                <option value="">Selecione um material</option>
-                            </select>
+                <h5>Espaços / Ambientes</h5>
+                <div id="espacos-container">
+                    <div class="espaco mb-4 border rounded p-3 position-relative">
+                        <button type="button" class="btn-close position-absolute top-0 end-0 m-2 remove-espaco" title="Remover Espaço" style="display:none;"></button>
+                        <div class="mb-2">
+                            <label class="form-label">Nome do Espaço/Ambiente</label>
+                            <input type="text" class="form-control" name="espaco_nome[]" required>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Quantidade</label>
-                            <input type="number" step="0.01" class="form-control quantidade-input" name="quantidade[]" value="1">
+                        <div class="itens-espaco">
+                            <div class="row item-row mb-2">
+                                <div class="col-md-5">
+                                    <label class="form-label">Material</label>
+                                    <select class="form-select material-select" name="material_id_0[]">
+                                        <option value="">Selecione um material</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Quantidade</label>
+                                    <input type="number" step="0.01" class="form-control quantidade-input" name="quantidade_0[]" value="1">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Preço Unitário</label>
+                                    <input type="number" step="0.01" class="form-control preco-input" name="preco_unitario_0[]" value="0.00">
+                                </div>
+                                <div class="col-md-1 d-flex align-items-end">
+                                    <button type="button" class="btn btn-danger remove-item"><i class="bi bi-trash"></i></button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Preço Unitário</label>
-                            <input type="number" step="0.01" class="form-control preco-input" name="preco_unitario[]" value="0.00">
-                        </div>
-                        <div class="col-md-1 d-flex align-items-end">
-                            <button type="button" class="btn btn-danger remove-item"><i class="bi bi-trash"></i></button>
-                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm add-item-espaco mt-2"><i class="bi bi-plus-circle"></i> Adicionar Item</button>
                     </div>
                 </div>
-                <button type="button" class="btn btn-secondary mb-4" id="add-item"><i class="bi bi-plus-circle"></i> Adicionar Item</button>
+                <button type="button" class="btn btn-primary mb-4" id="add-espaco"><i class="bi bi-plus-circle"></i> Adicionar Espaço/Ambiente</button>
 
                 <div class="d-grid gap-2">
                     <button type="submit" class="btn btn-success">Cadastrar Orçamento</button>
@@ -72,38 +84,119 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Autocomplete para clientes
-        const clienteSelect = document.getElementById('cliente_id');
-        if (!clienteSelect.selectedOptions[0].value) { // Se não houver cliente pré-selecionado
-            fetch('/clientes/api/buscar') // Assumindo que você tem uma API para buscar clientes
+        const clienteInput = document.getElementById('cliente_nome');
+        const clienteIdInput = document.getElementById('cliente_id');
+        const sugestoesDiv = document.getElementById('cliente_sugestoes');
+
+        clienteInput.addEventListener('input', function() {
+            const q = clienteInput.value;
+            if (q.length < 2) {
+                sugestoesDiv.innerHTML = '';
+                return;
+            }
+            fetch(`/clientes/api/buscar?q=${encodeURIComponent(q)}`)
                 .then(response => response.json())
                 .then(data => {
+                    sugestoesDiv.innerHTML = '';
                     data.forEach(cliente => {
+                        const item = document.createElement('button');
+                        item.type = 'button';
+                        item.className = 'list-group-item list-group-item-action';
+                        item.textContent = `${cliente.nome} (${cliente.cpf_cnpj})`;
+                        item.dataset.id = cliente.id;
+                        item.dataset.nome = cliente.nome;
+                        item.addEventListener('click', function() {
+                            clienteInput.value = cliente.nome + ' (' + cliente.cpf_cnpj + ')';
+                            clienteIdInput.value = cliente.id;
+                            sugestoesDiv.innerHTML = '';
+                        });
+                        sugestoesDiv.appendChild(item);
+                    });
+                });
+        });
+
+        // Limpa id se o usuário apagar o nome
+        clienteInput.addEventListener('change', function() {
+            if (!clienteInput.value) clienteIdInput.value = '';
+        });
+
+        // Fecha sugestões ao clicar fora
+        document.addEventListener('click', function(e) {
+            if (!sugestoesDiv.contains(e.target) && e.target !== clienteInput) {
+                sugestoesDiv.innerHTML = '';
+            }
+        });
+
+
+        // Função para carregar materiais em um select
+        function loadMaterials(selectElement) {
+            fetch('/materiais/api/buscar?q=')
+                .then(response => response.json())
+                .then(data => {
+                    selectElement.innerHTML = '<option value="">Selecione um material</option>';
+                    data.forEach(material => {
                         const option = document.createElement('option');
-                        option.value = cliente.id;
-                        option.textContent = `${cliente.nome} (${cliente.cpf_cnpj})`;
-                        clienteSelect.appendChild(option);
+                        option.value = material.id;
+                        option.textContent = `${material.nome} (${material.codigo})`;
+                        selectElement.appendChild(option);
                     });
                 });
         }
 
-        // Adicionar/Remover itens do orçamento
-        document.getElementById('add-item').addEventListener('click', function() {
-            const itemRow = document.querySelector('.item-row').cloneNode(true);
-            itemRow.querySelectorAll('input').forEach(input => input.value = '');
-            itemRow.querySelector('.material-select').innerHTML = '<option value="">Selecione um material</option>';
-            document.getElementById('itens-orcamento').appendChild(itemRow);
-            loadMaterials(itemRow.querySelector('.material-select'));
+        // Adicionar/Remover Espaços
+        let espacoIndex = 0;
+        document.getElementById('add-espaco').addEventListener('click', function() {
+            espacoIndex++;
+            const espacoOriginal = document.querySelector('.espaco');
+            const novoEspaco = espacoOriginal.cloneNode(true);
+            novoEspaco.querySelector('input[name^="espaco_nome"]').value = '';
+            // Atualiza os names dos itens para o novo índice
+            novoEspaco.querySelectorAll('.item-row').forEach((itemRow, idx) => {
+                itemRow.querySelector('select').name = `material_id_${espacoIndex}[]`;
+                itemRow.querySelector('input.quantidade-input').name = `quantidade_${espacoIndex}[]`;
+                itemRow.querySelector('input.preco-input').name = `preco_unitario_${espacoIndex}[]`;
+            });
+            // Remove itens extras
+            novoEspaco.querySelectorAll('.item-row').forEach((row, idx) => { if (idx > 0) row.remove(); });
+            // Mostra botão de remover
+            novoEspaco.querySelector('.remove-espaco').style.display = '';
+            // Limpa valores
+            novoEspaco.querySelectorAll('input').forEach(input => { if (input.type !== 'hidden') input.value = ''; });
+            // Carrega materiais
+            loadMaterials(novoEspaco.querySelector('.material-select'));
+            document.getElementById('espacos-container').appendChild(novoEspaco);
         });
 
-        document.getElementById('itens-orcamento').addEventListener('click', function(e) {
+        // Remover espaço
+        document.getElementById('espacos-container').addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-espaco')) {
+                e.target.closest('.espaco').remove();
+            }
+        });
+
+        // Adicionar/Remover itens dentro de um espaço
+        document.getElementById('espacos-container').addEventListener('click', function(e) {
+            if (e.target.classList.contains('add-item-espaco')) {
+                const espaco = e.target.closest('.espaco');
+                const itensEspaco = espaco.querySelector('.itens-espaco');
+                const itemRowOriginal = itensEspaco.querySelector('.item-row');
+                const novoItem = itemRowOriginal.cloneNode(true);
+                novoItem.querySelectorAll('input').forEach(input => input.value = '');
+                loadMaterials(novoItem.querySelector('.material-select'));
+                itensEspaco.appendChild(novoItem);
+            }
             if (e.target.classList.contains('remove-item') || e.target.closest('.remove-item')) {
-                if (document.querySelectorAll('.item-row').length > 1) {
+                const itensEspaco = e.target.closest('.itens-espaco');
+                if (itensEspaco.querySelectorAll('.item-row').length > 1) {
                     e.target.closest('.item-row').remove();
                 } else {
-                    alert('Pelo menos um item é obrigatório.');
+                    alert('Pelo menos um item é obrigatório em cada espaço.');
                 }
             }
         });
+
+        // Carregar materiais para o primeiro espaço ao carregar a página
+        loadMaterials(document.querySelector('.espaco .material-select'));
 
         // Carregar materiais para os selects
         function loadMaterials(selectElement) {

@@ -11,5 +11,5 @@ class Cliente(db.Model):
     estado = db.Column(db.String(2))
     cep = db.Column(db.String(10))
 
-    orcamentos = db.relationship('Orcamento', backref='cliente', lazy=True)
+    orcamentos = db.relationship('Orcamento', back_populates='cliente', lazy=True)
 

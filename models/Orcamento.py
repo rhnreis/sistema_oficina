@@ -2,9 +2,10 @@ from extensions import db
 from datetime import datetime, date
 
 class Orcamento(db.Model):
+    ordens_servico = db.relationship("OrdemServico", back_populates="orcamento")
     id = db.Column(db.Integer, primary_key=True)
     cliente_id = db.Column(db.Integer, db.ForeignKey("cliente.id"), nullable=False)
-    usuario_id = db.Column(db.Integer, db.ForeignKey("usuario.id"), nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=False)
     numero_orcamento = db.Column(db.String(50), unique=True, nullable=False)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     data_orcamento = db.Column(db.DateTime, default=datetime.utcnow)
@@ -16,7 +17,8 @@ class Orcamento(db.Model):
     status = db.Column(db.String(50), default="pendente") # pendente, aceito, rejeitado
 
     itens = db.relationship("ItemOrcamento", backref="orcamento", lazy=True)
-    ordem_servico = db.relationship("OrdemServico", backref="orcamento", uselist=False)
+    ordem_servico = db.relationship("OrdemServico", back_populates="orcamento", uselist=False)
+    cliente = db.relationship("Cliente", back_populates="orcamentos")
     
     def calcular_total(self):
         total_materiais = sum(item.total_item for item in self.itens)

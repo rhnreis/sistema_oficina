@@ -25,8 +25,8 @@
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="codigo" class="form-label">Código *</label>
-                                <input type="text" class="form-control" id="codigo" name="codigo" required>
+                                <label for="codigo" class="form-label">Código</label>
+                                <input type="text" class="form-control" id="codigo" name="codigo" placeholder="Deixe em branco para gerar automaticamente">
                             </div>
                         </div>
                     </div>
@@ -72,6 +72,10 @@
                         </div>
                     </div>
                     
+                    <div class="mb-3">
+                        <label for="valor_frete" class="form-label">Valor do Frete (calculado)</label>
+                        <input type="text" class="form-control" id="valor_frete" name="valor_frete" readonly>
+                    </div>
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-check"></i> Cadastrar
@@ -95,10 +99,36 @@
             <div class="card-body">
                 <ul class="list-unstyled mb-0">
                     <li><strong>Campos obrigatórios:</strong> marcados com *</li>
-                    <li><strong>Código:</strong> deve ser único no sistema</li>
+                    <li><strong>Código:</strong> se não informado, será gerado automaticamente</li>
                     <li><strong>Preço:</strong> valor unitário do material</li>
+                    <li><strong>Frete:</strong> calculado automaticamente conforme configuração</li>
                     <li><strong>Estoque:</strong> quantidade atual disponível</li>
                 </ul>
+{% block scripts %}
+<script>
+// Busca porcentagem de frete do backend (opcional: pode ser renderizado via contexto também)
+document.addEventListener('DOMContentLoaded', function() {
+    const precoInput = document.getElementById('preco_unitario');
+    const freteInput = document.getElementById('valor_frete');
+    let porcentagemFrete = 0.0;
+
+    // Tenta buscar do backend via endpoint, ou defina manualmente aqui
+    {% set porcentagem_frete = 0.0 %}
+    {% if config %}
+        {% set porcentagem_frete = config.porcentagem_frete %}
+    {% endif %}
+    porcentagemFrete = {{ porcentagem_frete|default(0.0) }};
+
+    function calcularFrete() {
+        const preco = parseFloat(precoInput.value) || 0;
+        const frete = preco * (porcentagemFrete / 100.0);
+        freteInput.value = frete.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    precoInput.addEventListener('input', calcularFrete);
+    calcularFrete();
+});
+</script>
+{% endblock %}
             </div>
         </div>
     </div>

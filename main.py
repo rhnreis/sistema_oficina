@@ -25,9 +25,8 @@ def create_app():
     from routes.orcamentos import orcamentos_bp
     from routes.ordens import ordens_bp
     from routes.relatorios import relatorios_bp
-    
-    # ... outros blueprints
-    
+    from routes.configuracoes import configuracoes_bp
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(clientes_bp)
     app.register_blueprint(dashboard_bp)
@@ -35,14 +34,14 @@ def create_app():
     app.register_blueprint(notas_fiscais_bp)
     app.register_blueprint(orcamentos_bp)
     app.register_blueprint(ordens_bp)
-    app.register_blueprint(relatorios_bp)  
+    app.register_blueprint(relatorios_bp)
+    app.register_blueprint(configuracoes_bp)
 
 
     # ... outros blueprints
     
-    # Criar tabelas e usuário inicial
+    # Criar usuário inicial se não existir
     with app.app_context():
-        db.create_all()
         from models import Usuario
         if not Usuario.query.filter_by(email='rodrigo@lantercar.com').first():
             admin = Usuario(

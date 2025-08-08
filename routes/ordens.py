@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, make_response
 from flask_login import login_required, current_user
-from models import db, OrdemServico, Contrato, NotaFiscal, Orcamento
+from models import db, OrdemServico, Contrato, NotaFiscal, Orcamento, Cliente
 from datetime import datetime
 
 #ordens_bp = Blueprint('ordens', __name__)
@@ -89,23 +89,32 @@ def listar():
     page = request.args.get('page', 1, type=int)
     search = request.args.get('search', '', type=str)
     status_filter = request.args.get('status', '', type=str)
-    
-    query = OrdemServico.query.join(Orcamento).join(Orcamento.cliente)
-    
+
+    # Join para trazer orcamento e cliente relacionados
+    query = OrdemServico.query\
+        .join(Orcamento, OrdemServico.orcamento_id == Orcamento.id)\
+        .join(Cliente, Cliente.id == Orcamento.cliente_id)\
+        .outerjoin(Contrato, Contrato.ordem_servico_id == OrdemServico.id)\
+        .outerjoin(NotaFiscal, NotaFiscal.ordem_servico_id == OrdemServico.id)\
+        .add_entity(Orcamento)\
+        .add_entity(Cliente)\
+        .add_entity(Contrato)\
+        .add_entity(NotaFiscal)
+
     if search:
         query = query.filter(
-            OrdemServico.numero_ordem.contains(search) |
-            Orcamento.numero_orcamento.contains(search) |
-            Orcamento.cliente.nome.contains(search)
+            (OrdemServico.numero_ordem.contains(search)) |
+            (Orcamento.numero_orcamento.contains(search)) |
+            (Cliente.nome.contains(search))
         )
-    
+
     if status_filter:
         query = query.filter(OrdemServico.status == status_filter)
-    
+
     ordens = query.order_by(OrdemServico.data_inicio.desc()).paginate(
         page=page, per_page=20, error_out=False
     )
-    
+
     return render_template('ordens/listar.html', 
                          ordens=ordens, 
                          search=search, 
@@ -114,7 +123,13 @@ def listar():
 @ordens_bp.route('/visualizar/<int:id>')
 @login_required
 def visualizar(id):
-    ordem = OrdemServico.query.get_or_404(id)
+    ordem = OrdemServico.query\
+        .options(
+            db.joinedload(OrdemServico.orcamento).joinedload(Orcamento.cliente),
+            db.joinedload(OrdemServico.contrato),
+            db.joinedload(OrdemServico.nota_fiscal)
+        )\
+        .get_or_404(id)
     return render_template('ordens/visualizar.html', ordem=ordem)
 
 @ordens_bp.route('/iniciar/<int:id>')
