@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, make_response
 from flask_login import login_required
-from models import db, NotaFiscal, OrdemServico
+from models import db, NotaFiscal, OrdemServico, Orcamento, Cliente
 
 notas_fiscais_bp = Blueprint('notas_fiscais', __name__)
 
@@ -11,13 +11,13 @@ def listar():
     search = request.args.get('search', '', type=str)
     status_filter = request.args.get('status', '', type=str)
     
-    query = NotaFiscal.query.join(OrdemServico).join(OrdemServico.orcamento).join(OrdemServico.orcamento.cliente)
+    query = NotaFiscal.query.join(OrdemServico).join(Orcamento).join(Cliente)
     
     if search:
         query = query.filter(
             NotaFiscal.numero_nf.contains(search) |
             OrdemServico.numero_ordem.contains(search) |
-            OrdemServico.orcamento.cliente.nome.contains(search)
+            Cliente.nome.contains(search)  # Corrigido para acessar Cliente.nome diretamente
         )
     
     if status_filter:
@@ -74,4 +74,3 @@ def cancelar(id):
         flash('Erro ao cancelar nota fiscal.', 'error')
     
     return redirect(url_for('notas_fiscais.visualizar', id=id))
-
